@@ -1,0 +1,121 @@
+hidden gotchas:
+
+sudo apt install libncurses5-dev
+sudo apt install autoconf automake libtool
+sudo apt install python2.7-dev
+if /usr/bin/python does not exist: sudo ln -s /usr/bin/python2.7 /usr/bin/python
+
+can not build within virtulbox shared folder
+because git-new-workdir needs to create a symbolic link
+https://www.speich.net/articles/en/2018/12/24/virtualbox-6-how-to-enable-symlinks-in-a-linux-guest-os/
+
+
+
+The example below shows how to build arm-gnu-toolchain-arm-none-eabi from sources using Linaro ABE build system.
+Instructions
+
+1. Install the dependencies ABE has a dependency on git-new-workdir and needs this tool to be installed in /usr/local/bin directory:
+
+  wget https://raw.githubusercontent.com/git/git/master/contrib/workdir/git-new-workdir
+  sudo mv git-new-workdir /usr/local/bin
+  sudo chmod +x /usr/local/bin/git-new-workdir
+
+
+2. Clone ABE from the URL below and checkout the stable branch (see Getting ABE):
+
+  git clone https://git.linaro.org/toolchain/abe.git
+
+
+3. Create the build directory and change to it:
+
+  mkdir build && cd build
+
+
+4. Configure ABE (from the build directory):
+
+  ../abe/configure
+
+
+5. Download the toolchain manifest file:
+
+Download the toolchain manifest file arm-gnu-toolchain-arm-none-eabi-abe-manifest.txt from https://developer.arm.com/tools-and-software/open-source-software/developer-tools/gnu-toolchain/downloads, into the build folder:
+
+   wget https://developer.arm.com/-/media/Files/downloads/gnu/11.3.rel1/manifest/arm-gnu-toolchain-arm-none-eabi-abe-manifest.txt
+
+
+6. Build toolchain (from the build directory):
+
+  ../abe/abe.sh --manifest arm-gnu-toolchain-arm-none-eabi-abe-manifest.txt --build all >& log &
+
+  ../abe/abe.sh --manifest arm-gnu-toolchain-arm-none-eabi-abe-manifest.txt --build all
+
+
+7. To build toolchain with newlib-nano configuration move out of build directory and create the build_newlib directory and change to it:
+
+  cd .. && mkdir build_newlib && cd build_newlib
+
+
+8. Clone ABE from the URL below and checkout the stable branch (see Getting ABE):
+
+  git clone https://git.linaro.org/toolchain/abe.git
+
+
+9. Configure ABE (from the build_newlib directory):
+
+  ./abe/configure
+
+
+10. Download the toolchain manifest file:
+
+Download the toolchain manifest file arm-gnu-toolchain-arm-none-eabi-nano-abe-manifest.txt from https://developer.arm.com/tools-and-software/open-source-software/developer-tools/gnu-toolchain/downloads, into the build_newlib folder:
+
+   wget https://developer.arm.com/-/media/Files/downloads/gnu/11.3.rel1/manifest/arm-gnu-toolchain-arm-none-eabi-nano-abe-manifest.txt
+
+
+11. Build toolchain (from the build_newlib directory):
+
+  abe/abe.sh --manifest arm-gnu-toolchain-arm-none-eabi-nano-abe-manifest.txt --build all >& log_nano
+
+  abe/abe.sh --manifest arm-gnu-toolchain-arm-none-eabi-nano-abe-manifest.txt --build all
+
+
+12. Move out of newlib_nano directory and download the copy_nano_libraries.sh script:
+
+Download the copy_nano_libraries.sh script from https://developer.arm.com/tools-and-software/open-source-software/developer-tools/gnu-toolchain/downloads, to the folder above build_newlib directory:
+
+  cd .. && wget https://developer.arm.com/-/media/Files/downloads/gnu/11.3.rel1/manifest/copy_nano_libraries.sh
+  chmod 755 copy_nano_libraries.sh
+
+
+12b: need to edit "host=" in copy_nano_libraries.sh
+
+  grep build= build/host.conf | awk -F= '{print $2}'
+
+
+13a: Create backup copy of compiled toolchains, in case the following steps go wrong
+
+  tar -cf compiled.tar build build_newlib
+  xz compiled.tar &
+  disown
+
+
+13. Copy the newlib nano header and newlib nano libraries build in build_newlib folder to build folder and change to build folder:
+
+  ./copy_nano_libraries.sh && cd build
+
+The built arm-none-eabi toolchain will be installed and available for use in the builds/destdir/x86_64-pc-linux-gnu/bin/ directory.
+
+
+14. Create tar of built toolchain
+
+  cd builds/destdir
+  tar -cJf /tmp/arm-gnu-toolchain-11.3.rel1-i686-pc-linux-ubuntu18-arm-none-eabi.tar.xz i686-pc-linux-gnu
+
+  tar -cvJf ~/toolchain/arm-gnu-toolchain-11.3.rel1-armv7l-unknown-linux-gnueabihf-arm-none-eabi.tar.xz armv7l-unknown-linux-gnueabihf
+  tar -cvJf ~/toolchain/arm-gnu-toolchain-11.3.rel1-aarch64-unknown-linux-gnu-arm-none-eabi.tar.xz aarch64-unknown-linux-gnu
+  tar -cvf ~/teensy/armtoolchain/linux32_ubuntu16/arm-gnu-toolchain-11.3.rel1-i686-pc-linux-gnu-arm-none-eabi.tar i686-pc-linux-gnu
+
+
+
+armv7l-unknown-linux-gnueabihf
+
